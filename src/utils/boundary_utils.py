@@ -1,7 +1,7 @@
 import cv2
 
 
-def drawRectangle(frame: cv2.typing.MatLike, boundaryBox: list[int], rectangleColour):
+def draw_rectangle(frame: cv2.typing.MatLike, boundaryBox: list[int], rectangleColour):
     """
     Docstring for drawRectangleAroundSoccerBall
 
