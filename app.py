@@ -37,6 +37,7 @@ def process_video(
     detection_interval: int = 10,
     miss_threshold: int = 5,
     should_show_live_output: bool = False,
+    is_in_evaluation_mode: bool = False,
 ) -> Result:
     """
     Runs the single-object detection + tracking pipeline
@@ -48,9 +49,14 @@ def process_video(
     :type tracker_type: str
     :param detection_interval: The frames count after which the app should re-detect
     :type detection_interval: int
-    :param miss_threshold: The max number of missed tracker predictions before
-    the app should re-detect the soccer ball
+    :param miss_threshold: The max number of missed tracker predictions after
+    which the app should re-detect the soccer ball
     :type miss_threshold: int
+    :param should_show_live_output: Whether to show the live output of the video being processed.
+    :type should_show_live_output: bool
+    :param is_in_evaluation_mode: Whether in evaluation mode. If in evaluation mode,
+    the app will detect and track every frame to get a better understanding of the performance of each tracker.
+    :type is_in_evaluation_mode: bool
     :return: Returns the detection and tracking frame count along with output FPS
     :rtype: Result
     """
@@ -92,6 +98,8 @@ def process_video(
 
     tracker = None
     banner_text: Optional[str] = None
+    detected_boundary = None
+
     frame_index = 0
     detected_frames_count = 0
     tracked_frames_count = 0
@@ -136,9 +144,12 @@ def process_video(
             )
             banner_text = "DETECT"
             if detected_boundary is not None:
-                # Initialise the tracker
-                tracker = create_tracker(tracker_type)
-                tracker.init(frame, detected_boundary)
+                if tracker is None:
+                    # Initialise the tracker
+                    tracker = create_tracker(tracker_type)
+                    tracker.init(frame, detected_boundary, input_fps)
+                else:
+                    tracker.correct(frame, detected_boundary, input_fps)
 
                 boundary_utils.draw_rectangle(
                     frame, detected_boundary, DETECTION_COLOUR
@@ -194,6 +205,8 @@ def process_video(
 if __name__ == "__main__":
     input_file = ROOT / "input" / "input1.mp4"
     result = process_video(
-        input_file, tracker_constants.TRACKER_CSRT, should_show_live_output=True
+        input_file,
+        tracker_constants.TRACKER_MOSSE,
+        should_show_live_output=True,
     )
     print(result)
